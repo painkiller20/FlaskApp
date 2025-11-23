@@ -25,23 +25,9 @@ jobs:
       - name: Run tests
         run: pytest
 
-      - name: Send email if tests fail
-        if: failure()   # only runs if previous steps in this job fail
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 465
-          username: ${{ secrets.EMAIL_USERNAME }}
-          password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: "FlaskApp CI Tests Failed"
-          body: "The CI pipeline for FlaskApp has failed. Please check the Actions tab for details."
-          to: your-email@example.com
-          from: your-email@example.com
-          secure: true
-
   build_docker:
     runs-on: ubuntu-latest
-    needs: test   # only runs if tests pass
+    needs: test  # only runs if tests pass
 
     steps:
       - name: Checkout code
@@ -51,7 +37,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build Docker image
-        run: docker build -t gillesarthur/flaskapp:latest -f ./Dockerfile .
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/flaskapp:latest -f ./Dockerfile .
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
@@ -60,7 +46,24 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Push Docker image
-        run: docker push gillesarthur/flaskapp:latest
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/flaskapp:latest
 
       - name: List files in repo
         run: ls -la
+
+  notify_failure:
+    runs-on: ubuntu-latest
+    needs: test
+    if: failure()
+    steps:
+      - name: Send email notification
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.example.com
+          server_port: 587
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "CI failed for FlaskApp"
+          to: "your-email@example.com"
+          from: "ci@example.com"
+          body: "Tests or Docker build failed. Check GitHub Actions."
