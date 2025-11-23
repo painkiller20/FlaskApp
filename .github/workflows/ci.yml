@@ -47,8 +47,6 @@ jobs:
 
       - name: Push Docker image
         run: |
-          docker tag flaskapp ${{ secrets.DOCKER_USERNAME }}/flaskapp:latest
-          docker push ${{ secrets.DOCKER_USERNAME }}/flaskapp:latest
-          
+          docker push gillesarthur/flaskapp:latest
       - name: List files in repo
         run: ls -la
